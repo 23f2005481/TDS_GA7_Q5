@@ -1,4 +1,3 @@
-# Required libraries for the script
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -20,23 +19,22 @@ df = pd.DataFrame(data)
 correlation_matrix = df.corr()
 
 # 3. Create the heatmap using Seaborn
-# Set a professional style and figure size for 512x512 output
+# Set a professional style and the exact figure size for 512x512 output
 sns.set_theme(style="whitegrid")
-plt.figure(figsize=(8, 8))
+plt.figure(figsize=(8, 8)) # 8 inches x 8 inches
 
-# This is the line the validator is looking for:
-sns.heatmap(
+# Create the heatmap
+heatmap = sns.heatmap(
     correlation_matrix, 
     annot=True, 
     fmt=".2f", 
     cmap="vlag"
 )
 
-# Add a title for professional appearance
-plt.title('Customer Engagement Correlation', fontsize=16)
-plt.tight_layout()
+# Add a title and adjust labels
+plt.title('Customer Engagement Correlation', fontsize=16, pad=20)
+plt.xticks(rotation=45, ha='right')
+plt.yticks(rotation=0)
 
-# 4. Save the chart to a file with the required dimensions
-# The dpi (dots per inch) is critical for getting the exact pixel size
-# 8 inches * 64 dpi = 512 pixels
-plt.savefig('chart.png', dpi=64)
+# Manually adjust subplot parameters to prevent labels from being cut off,
+# which is a more rigid
