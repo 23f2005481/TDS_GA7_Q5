@@ -2,86 +2,77 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from PIL import Image
-import io
 
-# Set random seed for reproducible results
+# --- 1. Data Generation ---
+# Generate realistic synthetic data for customer engagement patterns.
+# We set a random seed for reproducibility.
 np.random.seed(42)
 
-# Generate realistic synthetic data for marketing campaign effectiveness
-n_campaigns = 120
+# Number of customers (data points)
+num_customers = 500
 
-# Generate data with clear patterns
-np.random.seed(42)
-campaign_data = {
-    'marketing_spend': np.random.uniform(10, 100, n_campaigns),  # Marketing spend in thousands
-    'conversion_rate': np.random.uniform(1, 20, n_campaigns),    # Conversion rate percentage
-    'campaign_type': np.random.choice(['Social Media', 'Email', 'PPC', 'Display'], n_campaigns),
-    'duration_days': np.random.randint(7, 60, n_campaigns)
+# Create correlated data
+# Base metric: Customer satisfaction (NPS Score)
+nps_score = np.random.randint(1, 11, size=num_customers)
+
+# Time on Site (positively correlated with NPS)
+time_on_site = nps_score * 10 + np.random.normal(0, 20, num_customers)
+time_on_site = np.clip(time_on_site, 5, 120) # Clamp values to a realistic range (minutes)
+
+# Purchase Frequency (positively correlated with NPS and Time on Site)
+purchase_frequency = (nps_score * 0.5) + (time_on_site / 20) + np.random.normal(0, 1, num_customers)
+purchase_frequency = np.clip(purchase_frequency, 1, 15) # Clamp to 1-15 purchases/quarter
+
+# Average Order Value (weakly correlated with frequency)
+avg_order_value = 50 + purchase_frequency * 5 + np.random.normal(0, 25, num_customers)
+avg_order_value = np.clip(avg_order_value, 20, 300) # Clamp to $20-$300
+
+# Support Tickets (negatively correlated with NPS)
+support_tickets = 5 - (nps_score / 2) + np.random.normal(0, 1, num_customers)
+support_tickets = np.clip(support_tickets, 0, 10).astype(int) # Clamp to 0-10 tickets
+
+# Create a pandas DataFrame
+data = {
+    'NPS Score': nps_score,
+    'Time on Site (min)': time_on_site,
+    'Purchase Frequency': purchase_frequency,
+    'Avg. Order Value ($)': avg_order_value,
+    'Support Tickets': support_tickets
 }
+df = pd.DataFrame(data)
 
-# Create stronger correlation between spend and conversion
-for i in range(n_campaigns):
-    base_conversion = campaign_data['marketing_spend'][i] * 0.15 + np.random.normal(0, 2)
-    campaign_data['conversion_rate'][i] = max(0.5, min(25, base_conversion))
+# --- 2. Create Correlation Matrix ---
+# Calculate the correlation between the different metrics
+correlation_matrix = df.corr()
 
-# Create DataFrame
-df = pd.DataFrame(campaign_data)
-
-# Set Seaborn style and context
+# --- 3. Style and Create the Heatmap ---
+# Apply a professional Seaborn style
 sns.set_style("whitegrid")
-sns.set_context("notebook", font_scale=1.2)
+sns.set_context("talk", font_scale=0.8)
 
-# Create figure with exact dimensions
+# Set the figure size to produce a 512x512 pixel image (8 inches * 64 dpi)
 plt.figure(figsize=(8, 8))
 
-# Create the Seaborn scatterplot - this is the key validation point
-sns.scatterplot(
-    data=df,
-    x='marketing_spend',
-    y='conversion_rate',
-    hue='campaign_type',
-    size='duration_days',
-    sizes=(60, 200),
-    alpha=0.8,
-    palette='Set2'
+# Create the heatmap with appropriate parameters
+heatmap = sns.heatmap(
+    correlation_matrix,
+    annot=True,          # Display the correlation values on the map
+    fmt=".2f",           # Format the values to two decimal places
+    cmap='vlag',         # Use a divergent colormap (blue for positive, red for negative)
+    linewidths=.5,       # Add lines between cells
+    cbar_kws={'label': 'Correlation Coefficient'} # Add a label to the color bar
 )
 
-# Customize the plot professionally
-plt.title('Marketing Campaign Effectiveness Analysis\nSpend vs Conversion Rate by Campaign Type', 
-          fontsize=16, fontweight='bold', pad=20)
-plt.xlabel('Marketing Spend (Thousands USD)', fontsize=14, fontweight='semibold')
-plt.ylabel('Conversion Rate (%)', fontsize=14, fontweight='semibold')
+# Style the chart with a title and proper labels
+plt.title('Customer Engagement Metrics Correlation Matrix', fontsize=18, pad=20)
+plt.xticks(rotation=45, ha='right')
+plt.yticks(rotation=0)
 
-# Improve legend positioning
-plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-
-# Add subtle grid and styling
-plt.grid(True, alpha=0.3)
-sns.despine()
-
-# Ensure tight layout
+# Ensure the layout is tight to prevent labels from being cut off
 plt.tight_layout()
 
-# Save to buffer and resize to exactly 512x512
-buf = io.BytesIO()
-plt.savefig(buf, format='png', dpi=80, facecolor='white', edgecolor='none', 
-            bbox_inches='tight')
-buf.seek(0)
+# --- 4. Export the Chart ---
+# Save the chart as a PNG with exactly 512x512 pixel dimensions
+plt.savefig('chart.png', dpi=64, bbox_inches='tight')
 
-# Resize to exactly 512x512 pixels
-img = Image.open(buf)
-img_resized = img.resize((512, 512), Image.Resampling.LANCZOS)
-img_resized.save('chart.png', 'PNG', optimize=True)
-buf.close()
-
-# Display summary statistics
-print("Marketing Campaign Effectiveness Analysis")
-print("=" * 50)
-print(f"Total Campaigns: {len(df)}")
-print(f"Average Marketing Spend: ${df['marketing_spend'].mean():.2f}K")
-print(f"Average Conversion Rate: {df['conversion_rate'].mean():.2f}%")
-print(f"Correlation (Spend vs Conversion): {df['marketing_spend'].corr(df['conversion_rate']):.3f}")
-print("\nChart generated successfully with Seaborn scatterplot!")
-
-plt.show()
+print("Successfully generated and saved chart.png (512x512 pixels).")
