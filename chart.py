@@ -37,4 +37,11 @@ plt.xticks(rotation=45, ha='right')
 plt.yticks(rotation=0)
 
 # Manually adjust subplot parameters to prevent labels from being cut off,
-# which is a more rigid
+# which is a more rigid alternative to tight_layout()
+plt.subplots_adjust(left=0.2, bottom=0.2, right=0.95, top=0.9)
+
+
+# 4. Save the chart with the required DPI
+# 8 inches * 64 dpi (dots per inch) = 512 pixels.
+# We do NOT use bbox_inches='tight' or tight_layout() as they alter the final size.
+plt.savefig('chart.png', dpi=64)
